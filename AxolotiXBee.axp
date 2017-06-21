@@ -1,0 +1,569 @@
+<patch-1.0 appVersion="1.0.12">
+   <comment type="patch/comment" x="14" y="14" text="Config the Serial Port"/>
+   <comment type="patch/comment" x="14" y="28" text="PA2 (TX), PA3 (RX)"/>
+   <comment type="patch/comment" x="308" y="42" text="ID of the Axoloti"/>
+   <obj type="gpio/serial/config" uuid="8ec617bbe7b552a58656442e87513d8b4c69833a" name="config_1" x="14" y="56">
+      <params/>
+      <attribs>
+         <combo attributeName="baudrate" selection="115200"/>
+      </attribs>
+   </obj>
+   <obj type="ctrl/i radio 8 h" uuid="81c4cf13a2d0e267b327a4663a711c2f96f7f9b7" name="i_1" x="308" y="56">
+      <params>
+         <int32.hradio name="value" value="1"/>
+      </params>
+      <attribs/>
+   </obj>
+   <comment type="patch/comment" x="14" y="126" text="External Buttons"/>
+   <comment type="patch/comment" x="322" y="140" text="Button Note"/>
+   <obj type="gpio/in/digital" uuid="f59f139e8da912742832dc541157f20f30b7ac1b" name="digital_1" x="14" y="154">
+      <params/>
+      <attribs>
+         <combo attributeName="pad" selection="PA0"/>
+         <combo attributeName="mode" selection="pulldown"/>
+      </attribs>
+   </obj>
+   <obj type="ctrl/button" uuid="ef3d13774349df85aa9bfecf30dbc91ab8488b3f" name="button_1" x="112" y="154">
+      <params>
+         <bool32.mom name="b" value="0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="logic/or 2" uuid="3805d3c84d30032a44fbdbe42d9a2988a1790a3e" name="or_1" x="196" y="154">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="ctrl/dial p" uuid="cc5d2846c3d50e425f450c4b9851371b54f4d674" name="dial_5" x="322" y="154">
+      <params>
+         <frac32.u.map name="value" value="10.0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <comment type="patch/comment" x="476" y="168" text="Send the note to others boards"/>
+   <patchobj type="patch/object" uuid="302eb787-1aff-4470-9ccf-0e3a0b4df847" name="script2_1" x="476" y="196">
+      <params/>
+      <attribs>
+         <text attributeName="script">
+            <sText><![CDATA[/*
+ * This script send a message through the serial port 
+ * (PA2) when a button if pressed or released. 
+ * 
+ */
+
+//important
+//to convert a note to a int write  note>>20
+//to convert a int to a note write int<<20
+
+#define ON true
+#define OFF false
+#define N 4
+
+//int N = 1;    // number of inputs
+bool states[N];
+
+
+void sendMessage(int id, bool state, uint8_t note){
+	sdPut(&SD2,46); // start message "."
+	if(state){sdPut(&SD2,1);} // state ON or OFF
+	else{sdPut(&SD2,0);}
+	sdPut(&SD2,id); // ID of this axoloti
+	sdPut(&SD2,note); // note
+	sdPut(&SD2,35);  // end message "#"
+	chThdSleepMilliseconds(3);
+}
+
+void signalDecision(int i){
+	//only send signal when the state of the button change
+
+	int in;
+	int32_t note;
+	switch(i+1){
+		case 1:
+			in = i1;
+			note = in1;
+			break;
+		case 2:
+			in = i2;
+			note = in2;
+			break;
+		case 3:
+			in = i3;
+			note = in3;
+			break;
+		case 4:
+			in = i4;
+			note = in4;
+			break;
+		default:
+			break;
+	}
+	
+	if(states[i]){
+		if(in){states[i] = true;
+			//LogTextMessage("ON,ON"); 
+			}
+		else{states[i] = false;
+			//LogTextMessage("ON,OFF");
+			sendMessage(iNode,OFF,note>>20);
+			out1 = note;
+			o1 = OFF;
+			}
+	}
+	else{
+		if(in){states[i] = true;
+			//LogTextMessage("OFF,ON");
+			sendMessage(iNode,ON,note>>20);
+			out1 = note;
+			o1 = ON;
+			}
+		else{states[i] = false;
+			//LogTextMessage("OFF,OFF");
+			}
+	}	
+}
+
+
+void setup(void) {
+	//State of buttons inicialized in false
+	for (int i = 0; i < N; i++){
+		states[i] = OFF;
+	}
+} 
+
+
+void loop(void) {
+
+ 	//decide to send the signal for each input
+	for (int i = 0; i < N; i++){
+		signalDecision(i);
+	}	
+
+	chThdSleepMilliseconds(10);
+	
+}]]></sText>
+         </text>
+      </attribs>
+      <object id="patch/object" uuid="302eb787-1aff-4470-9ccf-0e3a0b4df847">
+         <author>FabLab IED</author>
+         <license>BSD</license>
+         <helpPatch>script.axh</helpPatch>
+         <inlets>
+            <int32 name="iNode"/>
+            <frac32 name="in1_" description="in1"/>
+            <frac32 name="in2_" description="in2"/>
+            <frac32 name="in3_"/>
+            <frac32 name="in4_"/>
+            <bool32 name="i1"/>
+            <bool32 name="i2"/>
+            <bool32 name="i3"/>
+            <bool32 name="i4"/>
+         </inlets>
+         <outlets>
+            <frac32 name="out1_"/>
+            <frac32 name="out2_"/>
+            <frac32 name="out3_" description="out3"/>
+            <frac32 name="out4_"/>
+            <bool32 name="o1"/>
+            <bool32 name="o2"/>
+            <bool32 name="o3"/>
+            <bool32 name="o4"/>
+         </outlets>
+         <displays/>
+         <params/>
+         <attribs>
+            <text name="script"/>
+         </attribs>
+         <includes/>
+         <code.declaration><![CDATA[int32_t in1,in2,in3,in4;
+int32_t out1,out2,out3,out4;
+int32_t iNode;
+bool i1,i2,i3,i4;
+bool o1,o2,o3,o4;
+attr_script
+msg_t ThreadX2(){
+  setup();
+  while(!chThdShouldTerminate()){
+     loop();
+     chThdSleepMilliseconds(1);
+  }
+  chThdExit((msg_t)0);
+}
+static msg_t ThreadX(void *arg) {
+((attr_parent *)arg)->ThreadX2();
+}
+WORKING_AREA(waThreadX, 1024);
+Thread *Thd;]]></code.declaration>
+         <code.init><![CDATA[in1=0;in2=0;in3=0;in4=0;
+out1=0;out2=20;out3=0;out4=0;
+i1=false;i2=false;i3=false;i4=false;
+o1=false;o2=false;o3=false;o4=false;
+  Thd = chThdCreateStatic(waThreadX, sizeof(waThreadX),
+                    NORMALPRIO, ThreadX, (void *)this);]]></code.init>
+         <code.dispose><![CDATA[chThdTerminate(Thd);
+chThdWait(Thd);]]></code.dispose>
+         <code.krate><![CDATA[outlet_out1__ = this->out1;
+outlet_out2__ = this->out2;
+outlet_out3__ = this->out3;
+outlet_out4__ = this->out4;
+outlet_o1 = this->o1;
+outlet_o2 = this->o2;
+outlet_o3 = this->o3;
+outlet_o4 = this->o4;
+this->iNode = inlet_iNode;
+this->in1 = inlet_in1__;
+this->in2 = inlet_in2__;
+this->in3 = inlet_in3__;
+this->in4 = inlet_in4__;
+this->i1 = inlet_i1;
+this->i2 = inlet_i2;
+this->i3 = inlet_i3;
+this->i4 = inlet_i4;]]></code.krate>
+      </object>
+   </patchobj>
+   <obj type="osc/sine" uuid="6e094045cca76a9dbf7ebfa72e44e4700d2b3ba" name="osc_1" x="644" y="196">
+      <params>
+         <frac32.s.map name="pitch" value="0.0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="math/*" uuid="c16a625a661f40e4b359db604dcd00b3befcdbe3" name="*_1" x="770" y="196">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="math/gain" uuid="62b1c1a6337c7c8f6aec96408a432477b113cfa0" name="gain_1" x="840" y="196">
+      <params>
+         <frac32.u.map name="amp" value="0.0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="audio/out stereo" uuid="a1ca7a567f535acc21055669829101d3ee7f0189" name="out_1" x="966" y="196">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="gpio/in/digital" uuid="f59f139e8da912742832dc541157f20f30b7ac1b" name="digital_2" x="14" y="252">
+      <params/>
+      <attribs>
+         <combo attributeName="pad" selection="PA1"/>
+         <combo attributeName="mode" selection="pulldown"/>
+      </attribs>
+   </obj>
+   <obj type="ctrl/button" uuid="ef3d13774349df85aa9bfecf30dbc91ab8488b3f" name="button_2" x="112" y="252">
+      <params>
+         <bool32.mom name="b" value="0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="logic/or 2" uuid="3805d3c84d30032a44fbdbe42d9a2988a1790a3e" name="or_2" x="196" y="252">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="ctrl/dial p" uuid="cc5d2846c3d50e425f450c4b9851371b54f4d674" name="dial_2" x="322" y="252">
+      <params>
+         <frac32.u.map name="value" value="26.5"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="gpio/in/digital" uuid="f59f139e8da912742832dc541157f20f30b7ac1b" name="digital_3" x="14" y="350">
+      <params/>
+      <attribs>
+         <combo attributeName="pad" selection="PA4"/>
+         <combo attributeName="mode" selection="pulldown"/>
+      </attribs>
+   </obj>
+   <obj type="ctrl/button" uuid="ef3d13774349df85aa9bfecf30dbc91ab8488b3f" name="button_3" x="112" y="350">
+      <params>
+         <bool32.mom name="b" value="0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="logic/or 2" uuid="3805d3c84d30032a44fbdbe42d9a2988a1790a3e" name="or_3" x="196" y="350">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="ctrl/dial p" uuid="cc5d2846c3d50e425f450c4b9851371b54f4d674" name="dial_3" x="322" y="350">
+      <params>
+         <frac32.u.map name="value" value="16.0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <comment type="patch/comment" x="490" y="434" text="Receive notes from other a"/>
+   <obj type="ctrl/button" uuid="ef3d13774349df85aa9bfecf30dbc91ab8488b3f" name="button_4" x="196" y="448">
+      <params>
+         <bool32.mom name="b" value="0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="ctrl/dial p" uuid="cc5d2846c3d50e425f450c4b9851371b54f4d674" name="dial_4" x="322" y="448">
+      <params>
+         <frac32.u.map name="value" value="15.5"/>
+      </params>
+      <attribs/>
+   </obj>
+   <patchobj type="patch/object" uuid="302eb787-1aff-4470-9ccf-0e3a0b4df847" name="script2_2" x="490" y="462">
+      <params/>
+      <attribs>
+         <text attributeName="script">
+            <sText><![CDATA[/*
+ * This script read signals in the serial port 
+ * (PA3) when a button if pressed or released. 
+ * 
+ */
+
+//important
+//to convert a note to a int write  note>>20
+//to convert a int to a note write int<<20
+
+#define ON true
+#define OFF false
+
+uint8_t *rxbuf;
+
+void readMessage(uint8_t *read, int nn){
+
+	if(nn == 5){
+		if(read[0] == 46 && read[4] == 35){
+			//46 = "." start of the message
+			//35 = "#" end of the message	
+			if(read[1]){ //state of the button 
+				//LogTextMessage("ON");
+				o1 = ON;
+			} else {
+				//LogTextMessage("OFF");
+				o1 = OFF;
+			}
+
+			out1 = read[3]<<20;
+		}
+		
+	}
+}
+
+
+
+void setup(void) {
+} 
+
+void loop(void) {
+	
+	int i = 0;
+
+	while(!sdGetWouldBlock(&SD2))
+	{
+    		char ch = sdGet(&SD2);
+    		//LogTextMessage("serialOut: %i", (uint8_t) ch);
+    		rxbuf[i] = ch;
+    		chThdSleepMilliseconds(3);
+    		i++;
+    	}	
+
+	if(i != 0) readMessage(rxbuf, i);
+			
+	chThdSleepMilliseconds(20);
+
+	
+}]]></sText>
+         </text>
+      </attribs>
+      <object id="patch/object" uuid="302eb787-1aff-4470-9ccf-0e3a0b4df847">
+         <sDescription>&quot;</sDescription>
+         <author>FabLab IED</author>
+         <license>BSD</license>
+         <helpPatch>script.axh</helpPatch>
+         <inlets>
+            <frac32 name="in1_" description="in1"/>
+            <frac32 name="in2_" description="in2"/>
+            <bool32 name="i1"/>
+            <bool32 name="i2"/>
+         </inlets>
+         <outlets>
+            <frac32 name="out1_" description="out1"/>
+            <frac32 name="out2_"/>
+            <bool32 name="o1"/>
+            <bool32 name="o2"/>
+         </outlets>
+         <displays/>
+         <params/>
+         <attribs>
+            <text name="script"/>
+         </attribs>
+         <includes/>
+         <code.declaration><![CDATA[int32_t in1,in2;
+int32_t out1,out2;
+bool i1,i2;
+bool o1,o2;
+attr_script
+msg_t ThreadX2(){
+  setup();
+  while(!chThdShouldTerminate()){
+     loop();
+     chThdSleepMilliseconds(1);
+  }
+  chThdExit((msg_t)0);
+}
+static msg_t ThreadX(void *arg) {
+((attr_parent *)arg)->ThreadX2();
+}
+WORKING_AREA(waThreadX, 1024);
+Thread *Thd;]]></code.declaration>
+         <code.init><![CDATA[in1=0;in2=0;
+out1=0;out2=0;
+i1=false;i2=false;
+o1=false;o2=false;
+  Thd = chThdCreateStatic(waThreadX, sizeof(waThreadX),
+                    NORMALPRIO, ThreadX, (void *)this);]]></code.init>
+         <code.dispose><![CDATA[chThdTerminate(Thd);
+chThdWait(Thd);]]></code.dispose>
+         <code.krate><![CDATA[outlet_out1__ = this->out1;
+outlet_out2__ = this->out2;
+
+outlet_o1 = this->o1;
+outlet_o2 = this->o2;
+
+this->in1 = inlet_in1__;
+this->in2 = inlet_in2__;
+
+this->i1 = inlet_i1;
+this->i2 = inlet_i2;]]></code.krate>
+      </object>
+   </patchobj>
+   <obj type="osc/sine" uuid="6e094045cca76a9dbf7ebfa72e44e4700d2b3ba" name="osc_2" x="644" y="462">
+      <params>
+         <frac32.s.map name="pitch" value="0.0"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="math/*" uuid="c16a625a661f40e4b359db604dcd00b3befcdbe3" name="*_2" x="770" y="462">
+      <params/>
+      <attribs/>
+   </obj>
+   <obj type="math/gain" uuid="62b1c1a6337c7c8f6aec96408a432477b113cfa0" name="gain_2" x="840" y="462">
+      <params>
+         <frac32.u.map name="amp" value="0.5"/>
+      </params>
+      <attribs/>
+   </obj>
+   <obj type="audio/out stereo" uuid="a1ca7a567f535acc21055669829101d3ee7f0189" name="out_2" x="966" y="462">
+      <params/>
+      <attribs/>
+   </obj>
+   <nets>
+      <net>
+         <source obj="osc_1" outlet="wave"/>
+         <dest obj="*_1" inlet="a"/>
+      </net>
+      <net>
+         <source obj="i_1" outlet="out"/>
+         <dest obj="script2_1" inlet="iNode"/>
+      </net>
+      <net>
+         <source obj="script2_1" outlet="o1"/>
+         <dest obj="*_1" inlet="b"/>
+      </net>
+      <net>
+         <source obj="button_1" outlet="o"/>
+         <dest obj="or_1" inlet="i1"/>
+      </net>
+      <net>
+         <source obj="button_2" outlet="o"/>
+         <dest obj="or_2" inlet="i1"/>
+      </net>
+      <net>
+         <source obj="dial_2" outlet="out"/>
+         <dest obj="script2_1" inlet="in2_"/>
+      </net>
+      <net>
+         <source obj="dial_3" outlet="out"/>
+         <dest obj="script2_1" inlet="in3_"/>
+      </net>
+      <net>
+         <source obj="button_3" outlet="o"/>
+         <dest obj="or_3" inlet="i1"/>
+      </net>
+      <net>
+         <source obj="button_4" outlet="o"/>
+         <dest obj="script2_1" inlet="i4"/>
+      </net>
+      <net>
+         <source obj="digital_1" outlet="out"/>
+         <dest obj="or_1" inlet="i2"/>
+      </net>
+      <net>
+         <source obj="digital_2" outlet="out"/>
+         <dest obj="or_2" inlet="i2"/>
+      </net>
+      <net>
+         <source obj="or_2" outlet="o"/>
+         <dest obj="script2_1" inlet="i2"/>
+      </net>
+      <net>
+         <source obj="digital_3" outlet="out"/>
+         <dest obj="or_3" inlet="i2"/>
+      </net>
+      <net>
+         <source obj="or_3" outlet="o"/>
+         <dest obj="script2_1" inlet="i3"/>
+      </net>
+      <net>
+         <source obj="dial_4" outlet="out"/>
+         <dest obj="script2_1" inlet="in4_"/>
+      </net>
+      <net>
+         <source obj="script2_2" outlet="o1"/>
+         <dest obj="*_2" inlet="b"/>
+      </net>
+      <net>
+         <source obj="or_1" outlet="o"/>
+         <dest obj="script2_1" inlet="i1"/>
+      </net>
+      <net>
+         <source obj="script2_1" outlet="out1_"/>
+         <dest obj="osc_1" inlet="pitch"/>
+      </net>
+      <net>
+         <source obj="dial_5" outlet="out"/>
+         <dest obj="script2_1" inlet="in1_"/>
+      </net>
+      <net>
+         <source obj="*_1" outlet="result"/>
+         <dest obj="gain_1" inlet="in"/>
+      </net>
+      <net>
+         <source obj="gain_1" outlet="out"/>
+         <dest obj="out_1" inlet="left"/>
+         <dest obj="out_1" inlet="right"/>
+      </net>
+      <net>
+         <source obj="osc_2" outlet="wave"/>
+         <dest obj="*_2" inlet="a"/>
+      </net>
+      <net>
+         <source obj="*_2" outlet="result"/>
+         <dest obj="gain_2" inlet="in"/>
+      </net>
+      <net>
+         <source obj="gain_2" outlet="out"/>
+         <dest obj="out_2" inlet="left"/>
+         <dest obj="out_2" inlet="right"/>
+      </net>
+      <net>
+         <source obj="script2_2" outlet="out1_"/>
+         <dest obj="osc_2" inlet="pitch"/>
+      </net>
+   </nets>
+   <settings>
+      <subpatchmode>no</subpatchmode>
+      <MidiChannel>1</MidiChannel>
+      <NPresets>8</NPresets>
+      <NPresetEntries>32</NPresetEntries>
+      <NModulationSources>8</NModulationSources>
+      <NModulationTargetsPerSource>8</NModulationTargetsPerSource>
+   </settings>
+   <notes><![CDATA[hola
+]]></notes>
+   <windowPos>
+      <x>62</x>
+      <y>51</y>
+      <width>1133</width>
+      <height>728</height>
+   </windowPos>
+</patch-1.0>

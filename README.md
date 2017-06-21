@@ -49,6 +49,12 @@ DOUT -> PA3
 
 DIN  -> PA2
 
-![XBee Board](./XBeeBoard.jpg)
+![XBee Board](./XbeeBoard.jpg)
 
 ![Axoloti Board](./AxolotiBoard.jpg)
+
+## Axoloti Patch
+
+
+
+![Axoloti Patch](./AxolotiPatch.png)
