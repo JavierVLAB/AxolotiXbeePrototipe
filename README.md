@@ -50,3 +50,5 @@ DOUT -> PA3
 DIN  -> PA2
 
 ![XBee Board](./XBeeBoard.jpg)
+
+![Axoloti Board](./AxolotiBoard.jpg)
