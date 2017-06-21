@@ -24,10 +24,15 @@ So, update the DigiMesh 2.4 TH PRO firmware in each XBee module through the XCTU
 Some important parameters:
 
 CH Channel = C
+
 ID Network ID = 1234
+
 CE Coordinator/End-Device Node = Standard Router [0]
+
 DH Destination Address High = 0
+
 DL Destination Address Low  = FFFF
+
 AP API Enable = Transparation Mode[0]
 
 ## Hardware conections
@@ -35,7 +40,13 @@ AP API Enable = Transparation Mode[0]
 For convenience we solder headers in the boards how you can see in the picture. The conections are:
 
 XBee module -> Axoloti board
+
 GND  -> GND
+
 3.3v -> VDDA
+
 DOUT -> PA3
+
 DIN  -> PA2
+
+[XBee Board](./XBeeBoard.jpg)
