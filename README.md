@@ -55,6 +55,8 @@ DIN  -> PA2
 
 ## Axoloti Patch
 
+The Axoloti Patch do some things, receive a signal in the pins PA0, PA1 and PA4, and generate a note from then. This note are sends through the serial port (pin PA2 TX). At the same time, the board receive a message from other boards to generated a note.
 
+The message send o receive consist in 5 byte, the byte are: start of the message (.), state of the note (ON or OFF, 0 or 1), Axoloti ID, Note, end of the message (#).
 
 ![Axoloti Patch](./AxolotiPatch.png)
