@@ -49,4 +49,4 @@ DOUT -> PA3
 
 DIN  -> PA2
 
-[!XBee Board](./XBeeBoard.jpg)
+![XBee Board](./XBeeBoard.jpg)
